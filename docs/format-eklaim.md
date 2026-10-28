@@ -105,9 +105,15 @@ Simpangan maksimum pada *cost weight* tersirat (`IDRG_TOTAL_TARIF / IDRG_NBR`)
 terhadap nilai tertulis adalah **0,004746** — tepat di bawah setengah satuan
 desimal terakhir (0,005).
 
-→ **Toleransi yang benar: `|IDRG_TOTAL_TARIF − tcw × NBR| ≤ 0,005 × IDRG_NBR`.**
+→ **Toleransi yang benar: `|IDRG_TOTAL_TARIF − tcw × NBR| ≤ 0,005 × IDRG_NBR + 0,5`.**
 Dengan toleransi ini sampel cocok **260/260 (100 %)**. Inilah yang dipakai
 validator parser.
+
+Tambahan `+ 0,5` menutup pembulatan kedua: `IDRG_TOTAL_TARIF` berupa rupiah
+bulat. Tanpa itu, *cost weight* yang nilainya tepat di tengah (mis. 2,555,
+dibulatkan ke atas menjadi 2,56) menghasilkan selisih sedikit di atas batas
+dan dilaporkan sebagai pelanggaran palsu. Kasus ini tidak muncul di sampel,
+tetapi muncul pada data sintetis Fase 1.
 
 `IDRG_NBR` konstan per jenis rawat:
 

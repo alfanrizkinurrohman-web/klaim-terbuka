@@ -1,0 +1,579 @@
+# Pemetaan kolom berkas ekspor E-Klaim -> nama kolom baku di tabel `klaim`.
+#
+# Berkas ini adalah SATU-SATUNYA tempat nama kolom asli dituliskan. Kode program
+# tidak boleh memuat nama kolom E-Klaim secara langsung.
+#
+# Urutan entri di bawah ini HARUS sama dengan urutan kolom di berkas, karena
+# dipakai untuk memeriksa header (lihat src/parser/columnMap.ts).
+#
+# Arti field:
+#   sumber   : nama kolom persis seperti di baris header berkas TXT
+#   nama     : nama kolom baku (snake_case) di tabel `klaim`
+#   tipe     : lihat daftar di bawah
+#   identitas: true  -> wajib di-mask di UI, tidak pernah diekspor tanpa izin
+#   komponen_tarif: true -> termasuk 18 komponen penyusun TARIF_RS
+#   catatan  : keterangan bebas, ditampilkan di dokumentasi
+#
+# Tipe yang dikenali:
+#   teks      - string; "-" dan "None" dinormalkan menjadi NULL
+#   kode      - string kode; dipertahankan apa adanya kecuali "None" -> NULL
+#   enum      - string kode dari himpunan tertutup (lihat enum: di bawah entri)
+#   bilangan  - integer; "", "-", "None" -> NULL
+#   desimal   - angka desimal; "" -> NULL
+#   tanggal   - DD/MM/YYYY -> DATE
+#   daftar_kode - dipisah ";", "" / "-" / "None" -> daftar kosong.
+#                 Elemen pertama = kode utama.
+#   majemuk   - beberapa nilai dipisah ";" dengan arti berbeda per posisi
+#               (lihat sub_field:)
+#   mentah    - disimpan apa adanya, tidak diinterpretasi
+#
+# Lisensi berkas ini mengikuti kode program (AGPL-3.0-or-later).
+
+versi: 1
+pemisah_kolom: "\t"
+pemisah_daftar: ";"
+format_tanggal: "DD/MM/YYYY"
+
+# Nilai yang berarti "kosong" di berkas E-Klaim. Dipakai lintas tipe.
+nilai_kosong:
+  - ""
+  - "-"
+  - "None"
+
+kolom:
+  - sumber: KODE_RS
+    nama: kode_rs
+    tipe: kode
+    catatan: Kode rumah sakit. Pada berkas anonim bernilai 0000000.
+
+  - sumber: KELAS_RS
+    nama: kelas_rs
+    tipe: enum
+    enum: [A, B, C, D]
+
+  - sumber: KELAS_RAWAT
+    nama: kelas_rawat
+    tipe: enum
+    enum: ["1", "2", "3"]
+
+  - sumber: KODE_TARIF
+    nama: kode_tarif
+    tipe: kode
+    catatan: Regionalisasi tarif, mis. CS.
+
+  - sumber: PTD
+    nama: ptd
+    tipe: enum
+    enum: ["1", "2"]
+    catatan: >-
+      1 = rawat inap, 2 = rawat jalan. SATU-SATUNYA penentu jenis rawat.
+      Jangan menyimpulkan jenis rawat dari segmen kode INA-CBG.
+
+  - sumber: ADMISSION_DATE
+    nama: tanggal_masuk
+    tipe: tanggal
+
+  - sumber: DISCHARGE_DATE
+    nama: tanggal_pulang
+    tipe: tanggal
+
+  - sumber: BIRTH_DATE
+    nama: tanggal_lahir
+    tipe: tanggal
+    identitas: true
+
+  - sumber: BIRTH_WEIGHT
+    nama: berat_lahir_gram
+    tipe: bilangan
+    catatan: Bernilai 0 di seluruh sampel Fase 0; belum dipastikan apakah memang jarang diisi.
+
+  - sumber: SEX
+    nama: jenis_kelamin
+    tipe: enum
+    enum: ["1", "2"]
+
+  - sumber: DISCHARGE_STATUS
+    nama: cara_pulang
+    tipe: enum
+    enum: ["1", "2", "3", "4", "5"]
+
+  - sumber: DIAGLIST
+    nama: diagnosis_inacbg
+    tipe: daftar_kode
+    catatan: Kode ICD-10. Elemen pertama = diagnosis utama.
+
+  - sumber: PROCLIST
+    nama: prosedur_inacbg
+    tipe: daftar_kode
+    catatan: Kode ICD-9-CM. Kosong ditulis "-".
+
+  - sumber: ADL1
+    nama: adl1
+    tipe: bilangan
+
+  - sumber: ADL2
+    nama: adl2
+    tipe: bilangan
+
+  - sumber: IN_SP
+    nama: input_sp
+    tipe: kode
+    catatan: Input special procedure, mis. YY10. Kosong ditulis "None".
+
+  - sumber: IN_SR
+    nama: input_sr
+    tipe: kode
+
+  - sumber: IN_SI
+    nama: input_si
+    tipe: kode
+
+  - sumber: IN_SD
+    nama: input_sd
+    tipe: kode
+
+  - sumber: INACBG
+    nama: kode_inacbg
+    tipe: kode
+    catatan: Format CMG-tipe_kasus-spesifik-severity, mis. M-3-16-0.
+
+  - sumber: SUBACUTE
+    nama: kode_subacute
+    tipe: kode
+
+  - sumber: CHRONIC
+    nama: kode_chronic
+    tipe: kode
+
+  - sumber: SP
+    nama: kode_sp
+    tipe: kode
+
+  - sumber: SR
+    nama: kode_sr
+    tipe: kode
+
+  - sumber: SI
+    nama: kode_si
+    tipe: kode
+
+  - sumber: SD
+    nama: kode_sd
+    tipe: kode
+
+  - sumber: DESKRIPSI_INACBG
+    nama: deskripsi_inacbg
+    tipe: teks
+
+  - sumber: TARIF_INACBG
+    nama: tarif_inacbg
+    tipe: bilangan
+
+  - sumber: TARIF_SUBACUTE
+    nama: tarif_subacute
+    tipe: bilangan
+
+  - sumber: TARIF_CHRONIC
+    nama: tarif_chronic
+    tipe: bilangan
+
+  - sumber: DESKRIPSI_SP
+    nama: deskripsi_sp
+    tipe: teks
+
+  - sumber: TARIF_SP
+    nama: tarif_sp
+    tipe: bilangan
+
+  - sumber: DESKRIPSI_SR
+    nama: deskripsi_sr
+    tipe: teks
+
+  - sumber: TARIF_SR
+    nama: tarif_sr
+    tipe: bilangan
+
+  - sumber: DESKRIPSI_SI
+    nama: deskripsi_si
+    tipe: teks
+
+  - sumber: TARIF_SI
+    nama: tarif_si
+    tipe: bilangan
+
+  - sumber: DESKRIPSI_SD
+    nama: deskripsi_sd
+    tipe: teks
+
+  - sumber: TARIF_SD
+    nama: tarif_sd
+    tipe: bilangan
+
+  - sumber: TOTAL_TARIF
+    nama: total_tarif
+    tipe: bilangan
+
+  - sumber: TARIF_RS
+    nama: tarif_rs
+    tipe: bilangan
+
+  - sumber: TARIF_POLI_EKS
+    nama: tarif_poli_eksekutif
+    tipe: bilangan
+
+  - sumber: LOS
+    nama: los
+    tipe: bilangan
+    catatan: Lama rawat dalam hari; (tanggal_pulang - tanggal_masuk) + 1.
+
+  - sumber: ICU_INDIKATOR
+    nama: icu_indikator
+    tipe: enum
+    enum: ["0", "1"]
+
+  - sumber: ICU_LOS
+    nama: icu_los
+    tipe: bilangan
+
+  - sumber: VENT_HOUR
+    nama: jam_ventilator
+    tipe: bilangan
+
+  - sumber: NAMA_PASIEN
+    nama: nama_pasien
+    tipe: teks
+    identitas: true
+
+  - sumber: MRN
+    nama: mrn
+    tipe: kode
+    identitas: true
+    catatan: Nomor rekam medis. Dipakai sebagai kunci pasien untuk analisis readmisi.
+
+  - sumber: UMUR_TAHUN
+    nama: umur_tahun
+    tipe: bilangan
+
+  - sumber: UMUR_HARI
+    nama: umur_hari
+    tipe: bilangan
+
+  - sumber: DPJP
+    nama: dpjp
+    tipe: kode
+    identitas: true
+
+  - sumber: SEP
+    nama: sep
+    tipe: kode
+    identitas: true
+
+  - sumber: NOKARTU
+    nama: nomor_kartu
+    tipe: kode
+    identitas: true
+
+  - sumber: PAYOR_ID
+    nama: payor
+    tipe: majemuk
+    sub_field:
+      - nama: payor_kode
+        tipe: kode
+      - nama: payor_nama
+        tipe: teks
+    catatan: Ditulis sebagai "3;JKN".
+
+  - sumber: CODER_ID
+    nama: coder
+    tipe: majemuk
+    identitas: true
+    sub_field:
+      - nama: coder_id
+        tipe: kode
+      - nama: coder_ref
+        tipe: kode
+      - nama: coder_id_2
+        tipe: kode
+    catatan: >-
+      Tiga segmen dipisah ";". Dapat berupa string kosong. Seluruh segmen
+      diperlakukan sebagai identitas.
+
+  - sumber: VERSI_INACBG
+    nama: versi_inacbg
+    tipe: kode
+    catatan: Satu berkas dapat memuat beberapa versi. Aturan yang bergantung versi wajib memfilter kolom ini.
+
+  - sumber: VERSI_GROUPER
+    nama: versi_grouper
+    tipe: kode
+
+  - sumber: C1
+    nama: c1
+    tipe: mentah
+    catatan: ID urut. Diabaikan.
+
+  - sumber: C2
+    nama: c2
+    tipe: mentah
+    pengolahan_khusus: c2
+    catatan: >-
+      14 sub-field dipisah "#". Diproses khusus oleh src/parser/c2.ts.
+      Sub-field 12 dan 13 (1-based) DIBUANG saat parsing karena dapat memuat
+      nama dan NIK dari registri TB.
+
+  - sumber: C3
+    nama: c3
+    tipe: mentah
+    catatan: Angka 1-8, arti belum diketahui. Diabaikan.
+
+  - sumber: C4
+    nama: c4
+    tipe: mentah
+    catatan: Hash 32 karakter. Diabaikan.
+
+  - sumber: PROSEDUR_NON_BEDAH
+    nama: komp_prosedur_non_bedah
+    tipe: bilangan
+    komponen_tarif: true
+
+  - sumber: PROSEDUR_BEDAH
+    nama: komp_prosedur_bedah
+    tipe: bilangan
+    komponen_tarif: true
+
+  - sumber: KONSULTASI
+    nama: komp_konsultasi
+    tipe: bilangan
+    komponen_tarif: true
+
+  - sumber: TENAGA_AHLI
+    nama: komp_tenaga_ahli
+    tipe: bilangan
+    komponen_tarif: true
+
+  - sumber: KEPERAWATAN
+    nama: komp_keperawatan
+    tipe: bilangan
+    komponen_tarif: true
+
+  - sumber: PENUNJANG
+    nama: komp_penunjang
+    tipe: bilangan
+    komponen_tarif: true
+
+  - sumber: RADIOLOGI
+    nama: komp_radiologi
+    tipe: bilangan
+    komponen_tarif: true
+
+  - sumber: LABORATORIUM
+    nama: komp_laboratorium
+    tipe: bilangan
+    komponen_tarif: true
+
+  - sumber: PELAYANAN_DARAH
+    nama: komp_pelayanan_darah
+    tipe: bilangan
+    komponen_tarif: true
+
+  - sumber: REHABILITASI
+    nama: komp_rehabilitasi
+    tipe: bilangan
+    komponen_tarif: true
+
+  - sumber: KAMAR_AKOMODASI
+    nama: komp_kamar_akomodasi
+    tipe: bilangan
+    komponen_tarif: true
+
+  - sumber: RAWAT_INTENSIF
+    nama: komp_rawat_intensif
+    tipe: bilangan
+    komponen_tarif: true
+
+  - sumber: OBAT
+    nama: komp_obat
+    tipe: bilangan
+    komponen_tarif: true
+
+  - sumber: ALKES
+    nama: komp_alkes
+    tipe: bilangan
+    komponen_tarif: true
+
+  - sumber: BMHP
+    nama: komp_bmhp
+    tipe: bilangan
+    komponen_tarif: true
+
+  - sumber: SEWA_ALAT
+    nama: komp_sewa_alat
+    tipe: bilangan
+    komponen_tarif: true
+
+  - sumber: OBAT_KRONIS
+    nama: komp_obat_kronis
+    tipe: bilangan
+    komponen_tarif: true
+
+  - sumber: OBAT_KEMO
+    nama: komp_obat_kemo
+    tipe: bilangan
+    komponen_tarif: true
+
+  - sumber: IDRG_DIAG_LISTS
+    nama: diagnosis_idrg
+    tipe: daftar_kode
+    catatan: Kosong ditulis "" (berbeda dari PROCLIST yang memakai "-").
+
+  - sumber: IDRG_PROC_LISTS
+    nama: prosedur_idrg
+    tipe: daftar_kode
+
+  - sumber: IDRG_MDC_NUMBER
+    nama: idrg_mdc_nomor
+    tipe: kode
+
+  - sumber: IDRG_MDC_DESCRIPTION
+    nama: idrg_mdc_deskripsi
+    tipe: teks
+
+  - sumber: IDRG_DRG_CODE
+    nama: idrg_drg_kode
+    tipe: kode
+
+  - sumber: IDRG_DRG_DESCRIPTION
+    nama: idrg_drg_deskripsi
+    tipe: teks
+
+  - sumber: IDRG_COST_WEIGHT
+    nama: idrg_cost_weight
+    tipe: desimal
+
+  - sumber: IDRG_SA_COST_WEIGHT
+    nama: idrg_sa_cost_weight
+    tipe: desimal
+    catatan: Kosong di seluruh sampel Fase 0.
+
+  - sumber: IDRG_CH_COST_WEIGHT
+    nama: idrg_ch_cost_weight
+    tipe: desimal
+    catatan: Kosong di seluruh sampel Fase 0.
+
+  - sumber: IDRG_TOP_UP
+    nama: idrg_top_up
+    tipe: desimal
+    catatan: Kosong di seluruh sampel Fase 0.
+
+  - sumber: IDRG_TOTAL_COST_WEIGHT
+    nama: idrg_total_cost_weight
+    tipe: desimal
+    catatan: Disimpan 2 angka desimal; nilai sebenarnya belum dibulatkan (lihat validator IDRG).
+
+  - sumber: IDRG_NBR
+    nama: idrg_nbr
+    tipe: bilangan
+    catatan: Konstan per jenis rawat; berbeda untuk rawat inap dan rawat jalan.
+
+  - sumber: IDRG_TOTAL_TARIF
+    nama: idrg_total_tarif
+    tipe: bilangan
+
+  - sumber: IDRG_GROUPER_VERSION
+    nama: idrg_versi_grouper
+    tipe: kode
+
+  - sumber: IDRG_LOGIC_VERSION
+    nama: idrg_versi_logic
+    tipe: kode
+
+# ---------------------------------------------------------------------------
+# Kolom turunan dari C2 sub-field ke-14 (JSON) dan sub-field lain.
+# Lihat src/parser/c2.ts. Sub-field dinomori 1-based sesuai posisi setelah
+# split("#").
+# ---------------------------------------------------------------------------
+kolom_turunan:
+  - nama: naik_kelas
+    tipe: enum
+    enum: ["0", "1"]
+    asal: C2 sub-field 2
+
+  - nama: kelas_tujuan
+    tipe: kode
+    asal: C2 sub-field 3
+    catatan: "kelas_1 atau vip; kosong bila tidak naik kelas."
+
+  - nama: waktu_grouping
+    tipe: teks
+    asal: C2 sub-field 7
+    catatan: >-
+      Timestamp YYYY-MM-DD HH:MM:SS, selalu >= tanggal_pulang pada sampel.
+      Diduga waktu finalisasi klaim. BELUM PASTI, jangan dipakai untuk aturan.
+
+  - nama: cara_masuk
+    tipe: enum
+    enum: [gp, emd, outp, inp, mp]
+    asal: C2 sub-field 14 (JSON) -> cara_masuk
+
+  - nama: sistole
+    tipe: bilangan
+    asal: C2 sub-field 14 (JSON) -> sistole
+
+  - nama: diastole
+    tipe: bilangan
+    asal: C2 sub-field 14 (JSON) -> diastole
+
+  - nama: selisih_biaya_nilai
+    tipe: bilangan
+    asal: C2 sub-field 14 (JSON) -> selisih_biaya.nilai
+
+  - nama: selisih_biaya_pembayar
+    tipe: teks
+    asal: C2 sub-field 14 (JSON) -> selisih_biaya.pembayar
+
+  - nama: ventilator_digunakan
+    tipe: enum
+    enum: ["0", "1"]
+    asal: C2 sub-field 14 (JSON) -> ventilator.use_ind
+    catatan: Nilai "" diperlakukan sama dengan "0".
+
+  - nama: persalinan_gravida
+    tipe: bilangan
+    asal: C2 sub-field 14 (JSON) -> persalinan.gravida
+
+  - nama: persalinan_partus
+    tipe: bilangan
+    asal: C2 sub-field 14 (JSON) -> persalinan.partus
+
+  - nama: persalinan_abortus
+    tipe: bilangan
+    asal: C2 sub-field 14 (JSON) -> persalinan.abortus
+
+  - nama: persalinan_usia_kehamilan
+    tipe: bilangan
+    asal: C2 sub-field 14 (JSON) -> persalinan.usia_kehamilan
+
+  - nama: persalinan_onset_kontraksi
+    tipe: teks
+    asal: C2 sub-field 14 (JSON) -> persalinan.onset_kontraksi
+
+  - nama: persalinan_metode
+    tipe: daftar_kode
+    asal: C2 sub-field 14 (JSON) -> persalinan.delivery[].delivery_method
+
+  - nama: apgar_score
+    tipe: teks
+    asal: C2 sub-field 14 (JSON) -> apgar_score
+
+  - nama: kantong_darah
+    tipe: bilangan
+    asal: C2 sub-field 14 (JSON) -> kantong_darah
+
+  - nama: alteplase_ind
+    tipe: enum
+    enum: ["0", "1"]
+    asal: C2 sub-field 14 (JSON) -> alteplase_ind
+
+  - nama: dializer_single_use
+    tipe: teks
+    asal: C2 sub-field 14 (JSON) -> dializer_single_use

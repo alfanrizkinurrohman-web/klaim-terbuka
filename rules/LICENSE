@@ -1,0 +1,12 @@
+Isi folder `rules/` (berkas aturan YAML beserta deskripsi, sumber regulasi, dan
+catatan etikanya) dilisensikan terpisah dari kode program:
+
+    Creative Commons Attribution-ShareAlike 4.0 International (CC BY-SA 4.0)
+
+Teks lisensi lengkap: https://creativecommons.org/licenses/by-sa/4.0/legalcode.id
+
+Ringkasnya, Anda bebas membagikan dan mengubah isi folder ini, untuk tujuan apa
+pun termasuk komersial, selama Anda mencantumkan atribusi dan membagikan hasil
+perubahan dengan lisensi yang sama.
+
+Kode program di luar folder ini dilisensikan AGPL-3.0-or-later (lihat ../LICENSE).
