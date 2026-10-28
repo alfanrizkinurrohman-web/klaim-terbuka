@@ -1,0 +1,30 @@
+# === DATA KLAIM — JANGAN PERNAH DI-COMMIT ===
+# Berkas di samples/ berisi data klaim nyata. Test hanya memakai data sintetis
+# dari tests/fixtures/.
+samples/
+*.TXT
+*.txt
+!docs/**/*.txt
+*.ZIP
+*.zip
+
+# Hasil ekspor
+exports/
+*.csv
+*.xlsx
+
+# Dependensi & build
+node_modules/
+dist/
+dist-ssr/
+coverage/
+.vite/
+
+# Lingkungan & editor
+.env
+.env.*
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.log
