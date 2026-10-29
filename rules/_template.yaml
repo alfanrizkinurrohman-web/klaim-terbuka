@@ -1,0 +1,154 @@
+# ============================================================================
+# CONTEKAN ATURAN — salin berkas ini untuk membuat aturan baru.
+#
+# Cara pakai:
+#   1. Salin ke rules/<kategori>/<id-aturan>.yaml
+#   2. Ganti semua nilai di bawah ini.
+#   3. Jalankan `npm test` untuk memastikan aturan Anda diterima.
+#
+# Berkas yang namanya diawali garis bawah (_) TIDAK dimuat oleh aplikasi, jadi
+# contekan ini tidak akan muncul sebagai aturan.
+#
+# Penjelasan lengkap tiap bagian ada di CONTRIBUTING.md.
+# Daftar kolom yang bisa dipakai ada di config/column-map.yaml dan
+# docs/format-eklaim.md.
+# ============================================================================
+
+# Pengenal aturan. Huruf kecil dan tanda hubung saja. Harus sama dengan nama
+# berkasnya (tanpa .yaml) dan tidak boleh sama dengan aturan lain.
+id: contoh-aturan-baru
+
+# Satu kalimat yang langsung dimengerti koder. Inilah yang tampil di daftar.
+judul: Contoh aturan yang menandai sesuatu yang perlu diperiksa
+
+# Nama folder tempat berkas ini berada.
+# Yang sudah ada: duplikasi, kalender, readmisi, kelengkapan, kualitas-data,
+# transisi-idrg. Boleh membuat kategori baru bila memang berbeda sifatnya.
+kategori: kelengkapan
+
+# draft       = ambang atau rumusannya belum dipastikan terhadap regulasi.
+# tervalidasi = sudah dipastikan DAN sumber_regulasi di bawah sudah diisi.
+#
+# Mulailah dari draft. Jangan menaikkan ke tervalidasi tanpa sumber regulasi —
+# aplikasi akan menolaknya.
+status: draft
+
+# temuan    = perlu diperiksa koder (bawaan).
+# informasi = bukan kesalahan, hanya perlu diketahui.
+tingkat: temuan
+
+# Jelaskan APA yang ditandai dan MENGAPA hal itu belum tentu salah.
+# Sebutkan kemungkinan-kemungkinan yang wajar, supaya pembaca tidak langsung
+# menyimpulkan ada kesalahan.
+deskripsi: >-
+  Menandai klaim yang memenuhi kondisi tertentu. Jelaskan di sini kondisi apa
+  yang dicari, dan sebutkan alasan-alasan yang sah mengapa kondisi itu bisa
+  muncul — supaya temuan ini dibaca sebagai permintaan pemeriksaan, bukan
+  sebagai tuduhan.
+
+# Nomor dan judul peraturan yang menjadi dasar ambang aturan ini.
+# Tulis null bila belum pasti. JANGAN mengarang nomor peraturan.
+sumber_regulasi: null
+
+# Keterangan bebas: mengapa masih draft, apa yang perlu dipastikan, dan berapa
+# banyak temuan yang muncul saat Anda mengujinya. Boleh dihapus bila tidak ada.
+catatan: >-
+  Berstatus draft karena ... . Yang perlu dipastikan sebelum dinaikkan ke
+  tervalidasi: ... .
+
+# Ambang yang bisa diatur pengguna di UI. Hapus seluruh bagian ini bila aturan
+# Anda tidak punya ambang.
+#
+# Setiap parameter yang didaftarkan WAJIB dipakai di query sebagai {{nama}},
+# dan sebaliknya. Nilainya divalidasi sebelum dimasukkan ke SQL.
+parameter:
+  - nama: ambang_hari
+    deskripsi: Jelaskan ambang ini dalam bahasa yang dimengerti koder.
+    tipe: bilangan # bilangan atau teks
+    bawaan: 30
+
+# True bila query Anda memakai tabel hari_libur. Dengan ini, UI memberi tahu
+# pengguna kalau daftar hari liburnya belum diisi.
+butuh_hari_libur: false
+
+# Query SQL yang mencari klaimnya.
+#
+# Aturan main:
+#   - HARUS dimulai dengan SELECT atau WITH;
+#   - hanya boleh MEMBACA (INSERT, UPDATE, DELETE, dan sejenisnya ditolak);
+#   - hanya satu pernyataan;
+#   - setiap kolom di kolom_output harus muncul di sini.
+#
+# Tabel yang tersedia:
+#   klaim      — satu baris per klaim, memakai nama kolom baku.
+#   hari_libur — kolom: tanggal, keterangan, jenis.
+#
+# Selalu sertakan nomor_baris dan berkas supaya pengguna bisa menelusuri balik
+# ke baris aslinya dan membuka detail klaim.
+query: |
+  SELECT
+    nomor_baris,
+    berkas,
+    mrn,
+    nama_pasien,
+    sep,
+    tanggal_masuk,
+    kode_inacbg,
+    total_tarif,
+    dpjp
+  FROM klaim
+  WHERE ptd = '1'
+    AND los > {{ambang_hari}}
+  ORDER BY nomor_baris
+
+# Kolom yang ditampilkan di tabel temuan dan ikut terbawa ke ekspor.
+#
+#   nama      : harus sama persis dengan nama kolom di query.
+#   label     : judul kolom yang dibaca pengguna.
+#   identitas : true untuk kolom yang memuat identitas, supaya disamarkan.
+#   format    : teks (bawaan), angka, rupiah, tanggal, atau daftar.
+kolom_output:
+  - nama: nomor_baris
+    label: Baris
+    format: angka
+  - nama: berkas
+    label: Berkas
+  - nama: mrn
+    label: No. RM
+    identitas: true
+  - nama: nama_pasien
+    label: Nama pasien
+    identitas: true
+  - nama: sep
+    label: No. SEP
+    identitas: true
+  - nama: tanggal_masuk
+    label: Tanggal masuk
+    format: tanggal
+  - nama: kode_inacbg
+    label: Kode INA-CBG
+  - nama: total_tarif
+    label: Total tarif
+    format: rupiah
+  - nama: dpjp
+    label: DPJP
+    identitas: true
+
+# Daftar hal konkret yang perlu dibuka dan dilihat oleh koder.
+#
+# Tulis sebagai PEMERIKSAAN, bukan perintah mengubah data. Setiap butir
+# sebaiknya diawali kata "Periksa". Ada test yang memeriksa hal ini.
+#
+# Benar : "Periksa di rekam medis apakah ada perintah rawat inap tertulis."
+# Salah : "Ganti kode diagnosis menjadi yang lebih spesifik."
+bukti_yang_perlu_diperiksa:
+  - Periksa di rekam medis apakah ... .
+  - Periksa pada rincian tagihan rumah sakit apakah ... .
+  - Periksa kesesuaian ... terhadap catatan ... .
+
+# Batasan penafsiran temuan ini: apa yang TIDAK boleh disimpulkan darinya, dan
+# tindakan apa yang tidak boleh diambil hanya karena temuan ini muncul.
+catatan_etika: >-
+  Temuan ini adalah permintaan pemeriksaan dokumen, bukan kesimpulan bahwa ada
+  kesalahan. Bila rekam medis mendukung, klaim tetap sah dan tidak perlu
+  diubah. Jangan memakai temuan ini untuk ... .

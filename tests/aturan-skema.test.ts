@@ -1,9 +1,12 @@
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
+
 import { describe, expect, it } from 'vitest';
 
 import { terapkanParameter } from '../src/rules/engine';
 import { muatAturan } from '../src/rules/muat';
 import { KATA_KUNCI_TERLARANG } from '../src/rules/schema';
-import { aturanDenganId, berkasAturan, semuaAturan } from './support/aturan';
+import { AKAR_RULES, aturanDenganId, berkasAturan, semuaAturan } from './support/aturan';
 
 /** Aturan minimal yang sah, dipakai sebagai dasar test penolakan. */
 const ATURAN_SAH = `
@@ -84,6 +87,27 @@ describe('berkas aturan di rules/', () => {
         expect(teks, `aturan ${a.id}`).not.toMatch(terlarang);
       }
     }
+  });
+});
+
+describe('contekan rules/_template.yaml', () => {
+  const teks = readFileSync(join(AKAR_RULES, '_template.yaml'), 'utf8');
+
+  it('lulus validasi skema, supaya hasil salinannya langsung jalan', () => {
+    const hasil = muatAturan([{ jalur: 'rules/_template.yaml', teks }]);
+    expect(hasil.ditolak).toEqual([]);
+    expect(hasil.aturan).toHaveLength(1);
+  });
+
+  it('tidak ikut dimuat sebagai aturan sungguhan', () => {
+    expect(berkasAturan().map((b) => b.jalur)).not.toContain('rules/_template.yaml');
+    expect(semuaAturan().map((a) => a.id)).not.toContain('contoh-aturan-baru');
+  });
+
+  it('mencontohkan status draft tanpa sumber regulasi karangan', () => {
+    const hasil = muatAturan([{ jalur: 'rules/_template.yaml', teks }]);
+    expect(hasil.aturan[0]?.status).toBe('draft');
+    expect(hasil.aturan[0]?.sumber_regulasi).toBeNull();
   });
 });
 

@@ -40,6 +40,10 @@ describe('aset yang dibundel', () => {
     expect(jalur).toContain('rules/duplikasi/duplikasi-klaim.yaml');
   });
 
+  it('melewati berkas contekan yang namanya diawali garis bawah', () => {
+    expect(berkasAturan().map((b) => b.jalur)).not.toContain('rules/_template.yaml');
+  });
+
   it('melaporkan daftar hari libur masih placeholder', () => {
     expect(hariLiburMasihPlaceholder()).toBe(true);
   });
