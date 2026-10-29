@@ -284,7 +284,17 @@ unik untuk 260 baris, `SEP` unik 260/260, `DPJP` 43 nilai unik.
    Komponen penambahnya tidak terlihat di berkas.
 3. **`C2` sub-field 4, 6, 9, 10** — belum teridentifikasi, disimpan mentah.
 4. **`RAWAT_INTENSIF` = 0 di seluruh sampel** sementara `ICU_INDIKATOR = 1` pada
-   21 baris (dan `ICU_LOS > 0` pada sebagian). Aturan Fase 2 nomor 4 akan memicu
-   pada 21 dari 21 kasus ICU. Perlu dipastikan apakah biaya ICU memang dibukukan
-   di komponen lain (`KAMAR_AKOMODASI`) di RS ini.
+   21 baris. Pemeriksaan lanjutan menunjukkan ke-21 klaim ICU itu **seluruhnya
+   punya `KAMAR_AKOMODASI` > 0**, dengan biaya kamar per hari Rp161.667–485.000
+   dibanding median Rp117.500 pada rawat inap non-ICU — konsisten dengan dugaan
+   bahwa biaya ICU dibukukan di komponen kamar. Aturan ICU sudah dirumuskan
+   ulang agar menyesuaikan diri (lihat `rules/kelengkapan/icu-tidak-konsisten.yaml`).
+   Yang masih terbuka: adakah ketentuan yang mengatur di komponen mana biaya
+   perawatan intensif seharusnya dibukukan?
+
+   Pemeriksaan yang sama menemukan konsistensi ICU lainnya **tanpa pelanggaran**:
+   tidak ada `ICU_INDIKATOR = 1` dengan `ICU_LOS = 0`, tidak ada `ICU_LOS` atau
+   `VENT_HOUR` terisi pada klaim ber-`ICU_INDIKATOR = 0`, dan tidak ada `ICU_LOS`
+   yang melebihi `LOS`. Satu-satunya kejanggalan: **1 klaim rawat jalan
+   (`PTD = 2`) dengan `ICU_INDIKATOR = 1` dan `ICU_LOS = 1`**.
 5. **Toleransi IDRG** (§4.1) diubah dari ±Rp1 menjadi ±0,005 × `IDRG_NBR`.

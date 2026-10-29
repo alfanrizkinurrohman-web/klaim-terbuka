@@ -178,30 +178,108 @@ describe('3. rawat-inap-berulang', () => {
   });
 });
 
-describe('4. icu-tanpa-komponen-rawat-intensif', () => {
-  it('memicu bila indikator ICU 1 tetapi komponen rawat intensif nol', async () => {
-    const hasil = await uji('icu-tanpa-komponen-rawat-intensif', [
-      klaimUji(2, { icu_indikator: '1', icu_los: 3, komp_rawat_intensif: 0 }),
-      klaimUji(3, { icu_indikator: '1', icu_los: 3, komp_rawat_intensif: 4_500_000 }),
-      klaimUji(4, { icu_indikator: '0', komp_rawat_intensif: 0 }),
+describe('4. icu-tidak-konsisten', () => {
+  /** Klaim ICU yang wajar: biaya perawatan intensif ada di komponen kamar. */
+  const icuWajar = (baris: number, ubah: Record<string, unknown> = {}) =>
+    klaimUji(baris, {
+      icu_indikator: '1',
+      icu_los: 2,
+      komp_rawat_intensif: 0,
+      komp_kamar_akomodasi: 9_000_000,
+      ...(ubah as Record<string, never>),
+    });
+
+  it('TIDAK memicu bila berkas memang tidak memakai komponen rawat intensif', async () => {
+    // Inilah pokok perbaikannya: rumusan lama memicu pada seluruh kasus ICU
+    // di rumah sakit yang membukukan biaya ICU di komponen kamar.
+    const hasil = await uji('icu-tidak-konsisten', [
+      icuWajar(2),
+      icuWajar(3),
+      klaimUji(4),
     ]);
-    expect(barisTemuan(hasil.baris)).toEqual([2]);
+    expect(hasil.baris).toEqual([]);
   });
 
-  it('menampilkan biaya kamar agar kedua kemungkinan bisa dipilah', async () => {
-    const hasil = await uji('icu-tanpa-komponen-rawat-intensif', [
-      klaimUji(2, { icu_indikator: '1', icu_los: 2, jam_ventilator: 30, komp_kamar_akomodasi: 9_000_000 }),
+  it('memicu bila berkas memakai komponen rawat intensif pada klaim lain', async () => {
+    const hasil = await uji('icu-tidak-konsisten', [
+      icuWajar(2),
+      klaimUji(3, { icu_indikator: '1', icu_los: 2, komp_rawat_intensif: 4_500_000 }),
     ]);
-    expect(hasil.baris[0]?.['komp_kamar_akomodasi']).toBe(9_000_000);
-    expect(hasil.baris[0]?.['icu_los']).toBe(2);
+    expect(barisTemuan(hasil.baris)).toEqual([2]);
+    expect(String(hasil.baris[0]?.['alasan'])).toContain('padahal berkas ini memakainya');
+  });
+
+  it('memicu pada klaim rawat jalan yang indikator ICU-nya terisi', async () => {
+    const hasil = await uji('icu-tidak-konsisten', [
+      klaimUji(2, {
+        ptd: '2',
+        los: 1,
+        tanggal_pulang: '2026-06-01',
+        icu_indikator: '1',
+        icu_los: 1,
+        komp_kamar_akomodasi: 485_000,
+      }),
+      icuWajar(3),
+    ]);
+    expect(barisTemuan(hasil.baris)).toEqual([2]);
+    expect(hasil.baris[0]?.['alasan']).toBe('Klaim rawat jalan tetapi indikator ICU terisi');
+  });
+
+  it('memicu bila indikator ICU terisi tetapi lama rawat ICU nol', async () => {
+    const hasil = await uji('icu-tidak-konsisten', [icuWajar(2, { icu_los: 0 })]);
+    expect(hasil.baris[0]?.['alasan']).toBe('Indikator ICU terisi tetapi lama rawat ICU nol');
+  });
+
+  it('memicu bila lama rawat ICU melebihi lama rawat seluruhnya', async () => {
+    const hasil = await uji('icu-tidak-konsisten', [icuWajar(2, { los: 2, icu_los: 5 })]);
+    expect(hasil.baris[0]?.['alasan']).toBe('Lama rawat ICU melebihi lama rawat seluruhnya');
+  });
+
+  it('memicu bila lama rawat ICU terisi tetapi indikatornya tidak', async () => {
+    const hasil = await uji('icu-tidak-konsisten', [
+      klaimUji(2, { icu_indikator: '0', icu_los: 3 }),
+    ]);
+    expect(hasil.baris[0]?.['alasan']).toBe(
+      'Lama rawat ICU terisi tetapi indikator ICU tidak',
+    );
+  });
+
+  it('memicu bila jam ventilator terisi tetapi indikator ICU tidak', async () => {
+    const hasil = await uji('icu-tidak-konsisten', [
+      klaimUji(2, { icu_indikator: '0', icu_los: 0, jam_ventilator: 40 }),
+    ]);
+    expect(hasil.baris[0]?.['alasan']).toBe(
+      'Jam ventilator terisi tetapi indikator ICU tidak',
+    );
+  });
+
+  it('memicu bila tidak ada biaya rawat intensif maupun biaya kamar', async () => {
+    const hasil = await uji('icu-tidak-konsisten', [
+      icuWajar(2, { komp_kamar_akomodasi: 0 }),
+    ]);
+    expect(String(hasil.baris[0]?.['alasan'])).toContain('tidak ada biaya rawat intensif');
+  });
+
+  it('tidak memicu pada klaim ICU yang seluruh isiannya cocok', async () => {
+    const hasil = await uji('icu-tidak-konsisten', [
+      klaimUji(2, {
+        icu_indikator: '1',
+        icu_los: 2,
+        jam_ventilator: 30,
+        komp_rawat_intensif: 4_500_000,
+      }),
+      klaimUji(3),
+    ]);
+    expect(hasil.baris).toEqual([]);
+  });
+
+  it('menampilkan biaya kamar dan rawat intensif agar bisa dipilah', async () => {
+    const hasil = await uji('icu-tidak-konsisten', [
+      icuWajar(2, { komp_kamar_akomodasi: 0, jam_ventilator: 30 }),
+    ]);
+    expect(hasil.baris[0]?.['komp_kamar_akomodasi']).toBe(0);
+    expect(hasil.baris[0]?.['komp_rawat_intensif']).toBe(0);
     expect(hasil.baris[0]?.['jam_ventilator']).toBe(30);
-  });
-
-  it('memicu juga bila komponen rawat intensif kosong, bukan nol', async () => {
-    const hasil = await uji('icu-tanpa-komponen-rawat-intensif', [
-      klaimUji(2, { icu_indikator: '1', komp_rawat_intensif: null }),
-    ]);
-    expect(barisTemuan(hasil.baris)).toEqual([2]);
   });
 });
 

@@ -290,9 +290,9 @@ Selain itu:
 Beberapa hal sengaja dibiarkan belum diputuskan karena perlu konfirmasi orang
 yang memahami praktik di lapangan. Masukan Anda sangat berguna:
 
-- **Aturan ICU** memicu pada seluruh kasus ICU di berkas uji, karena komponen
-  rawat intensif bernilai nol sementara biayanya tampaknya dibukukan di
-  komponen kamar. Bagaimana di rumah sakit Anda?
+- **Aturan ICU** sudah dirumuskan ulang agar menyesuaikan diri dengan kebiasaan
+  pembukuan di berkas yang diperiksa. Yang masih terbuka: adakah ketentuan yang
+  mengatur di komponen mana biaya perawatan intensif seharusnya dibukukan?
 - **Ambang readmisi 30 hari** belum ada dasar regulasinya.
 - **Kelas rawat pada rawat jalan**: apakah ada ketentuan yang mengaturnya, atau
   itu sekadar kebiasaan pengisian aplikasi?

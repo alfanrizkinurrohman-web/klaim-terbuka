@@ -44,7 +44,7 @@ describe('berkas aturan di rules/', () => {
       .sort();
     expect(id).toEqual([
       'duplikasi-klaim',
-      'icu-tanpa-komponen-rawat-intensif',
+      'icu-tidak-konsisten',
       'komponen-tarif-tidak-wajar',
       'perbedaan-daftar-diagnosis',
       'rawat-inap-berulang',

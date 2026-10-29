@@ -1,0 +1,152 @@
+id: icu-tidak-konsisten
+judul: Informasi perawatan intensif yang tidak konsisten
+kategori: kelengkapan
+status: draft
+tingkat: temuan
+
+deskripsi: >-
+  Memeriksa apakah keterangan perawatan intensif pada satu klaim saling cocok:
+  indikator ICU, lama rawat ICU, jam ventilator, jenis rawat, dan tempat biaya
+  perawatan intensif dibukukan. Kolom "Alasan penandaan" menyebutkan
+  ketidakcocokan mana yang ditemukan, sehingga tiap temuan bisa ditindaklanjuti
+  dengan pemeriksaan yang berbeda.
+
+sumber_regulasi: null
+
+catatan: >-
+  Aturan ini menggantikan rumusan sebelumnya yang hanya membandingkan indikator
+  ICU terhadap komponen biaya rawat intensif. Rumusan lama memicu pada SELURUH
+  kasus ICU di berkas uji (21 dari 21), karena rumah sakit tersebut tidak pernah
+  memakai kolom komponen rawat intensif sama sekali — biaya perawatan intensif
+  dibukukan pada komponen kamar dan akomodasi. Aturan yang selalu memicu tidak
+  memberi informasi apa pun.
+
+
+  Karena itu pemeriksaan "komponen rawat intensif kosong" kini MENYESUAIKAN DIRI
+  dengan berkas yang sedang diperiksa: pemeriksaan itu hanya berlaku bila berkas
+  yang sama terbukti memakai kolom tersebut pada klaim lain. Dengan begitu
+  aturan ini bekerja baik di rumah sakit yang memakai kolom itu maupun yang
+  membukukan biaya ICU di komponen kamar, tanpa perlu disetel.
+
+
+  Yang tetap diperiksa tanpa syarat adalah ketidakcocokan yang tidak bergantung
+  pada kebiasaan pembukuan, misalnya klaim rawat jalan yang indikator ICU-nya
+  terisi. Pada berkas uji, rumusan baru ini menghasilkan 1 temuan — tepat kasus
+  seperti itu — menggantikan 21 temuan yang sebelumnya hampir seluruhnya palsu.
+
+
+  Berstatus draft: belum ada konfirmasi sumber regulasi untuk persyaratan
+  pencatatan perawatan intensif pada klaim.
+
+query: |
+  WITH konvensi AS (
+    SELECT count(*) FILTER (WHERE coalesce(komp_rawat_intensif, 0) > 0) > 0
+             AS berkas_memakai_komponen_intensif
+    FROM klaim
+  ),
+  dinilai AS (
+    SELECT
+      k.nomor_baris,
+      k.berkas,
+      k.mrn,
+      k.nama_pasien,
+      k.sep,
+      k.tanggal_masuk,
+      k.ptd,
+      k.los,
+      k.icu_indikator,
+      k.icu_los,
+      k.jam_ventilator,
+      k.komp_rawat_intensif,
+      k.komp_kamar_akomodasi,
+      k.kode_inacbg,
+      k.total_tarif,
+      k.dpjp,
+      CASE
+        WHEN k.icu_indikator = '1' AND k.ptd = '2'
+          THEN 'Klaim rawat jalan tetapi indikator ICU terisi'
+        WHEN k.icu_indikator = '1' AND coalesce(k.icu_los, 0) = 0
+          THEN 'Indikator ICU terisi tetapi lama rawat ICU nol'
+        WHEN coalesce(k.icu_los, 0) > coalesce(k.los, 0)
+          THEN 'Lama rawat ICU melebihi lama rawat seluruhnya'
+        WHEN coalesce(k.icu_indikator, '0') <> '1' AND coalesce(k.icu_los, 0) > 0
+          THEN 'Lama rawat ICU terisi tetapi indikator ICU tidak'
+        WHEN coalesce(k.icu_indikator, '0') <> '1' AND coalesce(k.jam_ventilator, 0) > 0
+          THEN 'Jam ventilator terisi tetapi indikator ICU tidak'
+        WHEN k.icu_indikator = '1'
+             AND coalesce(k.komp_rawat_intensif, 0) = 0
+             AND coalesce(k.komp_kamar_akomodasi, 0) = 0
+          THEN 'Indikator ICU terisi tetapi tidak ada biaya rawat intensif maupun biaya kamar'
+        WHEN k.icu_indikator = '1'
+             AND coalesce(k.komp_rawat_intensif, 0) = 0
+             AND m.berkas_memakai_komponen_intensif
+          THEN 'Komponen rawat intensif kosong, padahal berkas ini memakainya pada klaim lain'
+      END AS alasan
+    FROM klaim k
+    CROSS JOIN konvensi m
+  )
+  SELECT *
+  FROM dinilai
+  WHERE alasan IS NOT NULL
+  ORDER BY nomor_baris
+
+kolom_output:
+  - nama: nomor_baris
+    label: Baris
+    format: angka
+  - nama: berkas
+    label: Berkas
+  - nama: alasan
+    label: Alasan penandaan
+  - nama: mrn
+    label: No. RM
+    identitas: true
+  - nama: nama_pasien
+    label: Nama pasien
+    identitas: true
+  - nama: sep
+    label: No. SEP
+    identitas: true
+  - nama: tanggal_masuk
+    label: Tanggal masuk
+    format: tanggal
+  - nama: ptd
+    label: Jenis rawat
+  - nama: los
+    label: LOS
+    format: angka
+  - nama: icu_indikator
+    label: Indikator ICU
+  - nama: icu_los
+    label: Lama rawat ICU (hari)
+    format: angka
+  - nama: jam_ventilator
+    label: Jam ventilator
+    format: angka
+  - nama: komp_rawat_intensif
+    label: Komponen rawat intensif
+    format: rupiah
+  - nama: komp_kamar_akomodasi
+    label: Komponen kamar dan akomodasi
+    format: rupiah
+  - nama: kode_inacbg
+    label: Kode INA-CBG
+  - nama: total_tarif
+    label: Total tarif
+    format: rupiah
+  - nama: dpjp
+    label: DPJP
+    identitas: true
+
+bukti_yang_perlu_diperiksa:
+  - Periksa di rekam medis apakah pasien benar dirawat di unit perawatan intensif, berapa lama, dan apakah memakai ventilator.
+  - Periksa catatan ruangan untuk memastikan jenis rawat pada klaim sesuai dengan tempat pasien dirawat.
+  - Periksa pada rincian tagihan rumah sakit di komponen mana biaya perawatan intensif dibukukan.
+  - Periksa isian indikator ICU, lama rawat ICU, dan jam ventilator pada aplikasi E-Klaim terhadap catatan perawatan.
+
+catatan_etika: >-
+  Temuan ini soal kecocokan antar-isian, bukan soal besaran klaim. Memindahkan
+  biaya antar komponen atau mengubah indikator ICU supaya isiannya cocok satu
+  sama lain adalah hal yang TIDAK boleh dilakukan atas dasar temuan ini. Yang
+  benar adalah menyesuaikan catatan dengan pelayanan yang sungguh-sungguh
+  diberikan, termasuk bila hasilnya menurunkan nilai klaim.

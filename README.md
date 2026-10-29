@@ -102,7 +102,7 @@ temuan aturannya belum bisa dipercaya.
 | `duplikasi-klaim` | Klaim dengan No. RM, tanggal masuk, dan jenis rawat yang sama |
 | `rawat-jalan-hari-libur` | Rawat jalan pada hari Minggu atau hari libur nasional |
 | `rawat-inap-berulang` | Rawat inap berulang dalam rentang hari tertentu (bawaan 30) |
-| `icu-tanpa-komponen-rawat-intensif` | Indikator ICU terisi tetapi komponen rawat intensif nol |
+| `icu-tidak-konsisten` | Keterangan perawatan intensif yang tidak saling cocok |
 | `rawat-inap-los-1-hari` | Rawat inap dengan lama rawat 1 hari |
 | `rawat-jalan-kelas-rawat` | Rawat jalan dengan kelas rawat bukan kelas 3 |
 | `komponen-tarif-tidak-wajar` | Komponen biaya > 0 tetapi di bawah ambang kewajaran |
@@ -115,16 +115,25 @@ Aturan `perbedaan-daftar-diagnosis` bertingkat **informasi**: perbedaan
 pemetaan antara kedua grouper adalah hal wajar pada masa transisi iDRG, bukan
 kesalahan yang perlu diperbaiki.
 
-### Yang perlu diperhatikan pada aturan ICU
+### Aturan ICU menyesuaikan diri dengan berkas Anda
 
-Pada berkas uji kami, kolom komponen rawat intensif bernilai nol di **seluruh**
-klaim, sementara sebagian klaim ber-indikator ICU. Akibatnya aturan ini memicu
-pada semua kasus ICU. Kemungkinan besar biaya perawatan intensif memang
-dibukukan pada komponen kamar dan akomodasi.
+Rumah sakit berbeda-beda dalam membukukan biaya perawatan intensif: ada yang
+memakai komponen rawat intensif, ada yang memasukkannya ke komponen kamar dan
+akomodasi. Aturan yang menganggap salah satunya sebagai satu-satunya cara yang
+benar akan menghasilkan temuan palsu secara massal.
 
-Kolom biaya kamar, lama rawat ICU, dan jam ventilator ikut ditampilkan di
-temuan supaya kedua kemungkinan itu bisa dipilah. **Periksa dulu bagaimana
-rumah sakit Anda membukukan biaya ICU** sebelum menganggap temuan ini berarti.
+Karena itu, pemeriksaan "komponen rawat intensif kosong" hanya berlaku bila
+berkas yang sedang diperiksa **terbukti memakai kolom itu pada klaim lain**.
+Bila di berkas Anda kolom itu memang tidak pernah dipakai, pemeriksaan tersebut
+dilewati dengan sendirinya — tanpa perlu disetel.
+
+Yang tetap diperiksa tanpa syarat adalah ketidakcocokan yang tidak bergantung
+pada kebiasaan pembukuan, misalnya klaim rawat jalan yang indikator ICU-nya
+terisi, lama rawat ICU yang melebihi lama rawat seluruhnya, atau jam ventilator
+yang terisi sementara indikator ICU-nya tidak.
+
+Kolom **Alasan penandaan** pada tabel temuan menyebutkan ketidakcocokan mana
+yang ditemukan, sehingga tiap temuan bisa ditindaklanjuti berbeda.
 
 ---
 
@@ -185,7 +194,7 @@ src/rules/               Skema aturan, mesin eksekusi, dan ringkasan.
 src/privasi/             Penyamaran kolom identitas.
 src/ekspor/              Ekspor CSV dan Excel.
 src/ui/                  Komponen antarmuka.
-tests/                   217 test. Hanya memakai data sintetis.
+tests/                   224 test. Hanya memakai data sintetis.
 ```
 
 Dokumen [`docs/format-eklaim.md`](docs/format-eklaim.md) berisi hasil
