@@ -1,0 +1,88 @@
+# Pemeriksaan otomatis untuk setiap usulan perubahan (pull request).
+#
+# Tujuannya supaya penyumbang — termasuk koder yang tidak memprogram — langsung
+# tahu bila berkas aturannya belum memenuhi skema, tanpa perlu menjalankan
+# apa pun di komputer sendiri.
+#
+# Perubahan yang sudah masuk ke cabang main tidak diperiksa di sini, karena
+# alur penyebaran (deploy-pages.yml) sudah menjalankan pemeriksaan yang sama
+# sebelum menyebarkan.
+
+name: Periksa usulan perubahan
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# Bila ada dorongan baru ke PR yang sama, pemeriksaan lama dihentikan.
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  jaga-data:
+    name: Pastikan tidak ada data klaim
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - name: Ambil kode
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Tolak berkas yang mungkin memuat data klaim
+        env:
+          DASAR: ${{ github.event.pull_request.base.sha }}
+          PUNCAK: ${{ github.event.pull_request.head.sha }}
+        run: |
+          berkas=$(git diff --name-only --diff-filter=d "$DASAR" "$PUNCAK")
+          tersangka=$(printf '%s\n' "$berkas" \
+            | grep -Ei '^samples/|\.(txt|zip)$' \
+            | grep -vEi '^docs/' || true)
+
+          if [ -n "$tersangka" ]; then
+            echo "::error::Usulan ini menambahkan berkas yang mungkin memuat data klaim."
+            echo ""
+            echo "Berkas berikut ditolak:"
+            printf '%s\n' "$tersangka" | sed 's/^/  /'
+            echo ""
+            echo "Berkas ekspor E-Klaim TIDAK BOLEH masuk ke repositori. Satu baris"
+            echo "klaim saja sudah memuat nama pasien, nomor rekam medis, nomor SEP,"
+            echo "dan nomor kartu. Lihat CONTRIBUTING.md bagian paling atas."
+            echo ""
+            echo "Bila Anda perlu data contoh, pakai generator data sintetis di"
+            echo "tests/fixtures/generator.ts."
+            exit 1
+          fi
+
+          echo "Tidak ada berkas .txt, .zip, maupun isi samples/ yang ditambahkan."
+
+  periksa:
+    name: Tipe, test, dan build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ambil kode
+        uses: actions/checkout@v4
+
+      - name: Siapkan Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+
+      - name: Pasang dependensi
+        run: npm ci
+
+      - name: Periksa tipe
+        run: npm run typecheck
+
+      - name: Jalankan test
+        run: npm test
+
+      # Build ikut diperiksa supaya kesalahan yang hanya muncul saat membangun
+      # situs tidak lolos sampai ke penyebaran.
+      - name: Bangun situs
+        run: npm run build

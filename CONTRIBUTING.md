@@ -261,6 +261,20 @@ it('memicu pada rawat inap dengan LOS 1 hari', async () => {
 `klaimUji()` membuat satu klaim sintetis yang tidak memicu aturan apa pun;
 Anda cukup mengubah kolom yang relevan.
 
+### Pemeriksaan otomatis saat Anda mengirim usulan
+
+Setiap usulan perubahan diperiksa otomatis. Anda tidak perlu menjalankan apa
+pun di komputer sendiri — hasilnya muncul di halaman usulan Anda:
+
+- **Pastikan tidak ada data klaim** — menolak usulan yang menambahkan berkas
+  `.txt`, `.zip`, atau isi `samples/`.
+- **Tipe, test, dan build** — menjalankan `npm run typecheck`, `npm test`, dan
+  `npm run build`. Berkas aturan yang tidak memenuhi skema akan gagal di sini,
+  lengkap dengan nama berkas dan bagian yang salah.
+
+Kalau ada yang merah, baca pesannya — pesan itu memang ditulis untuk dibaca.
+Kalau masih bingung, tanyakan saja di usulan Anda.
+
 ---
 
 ## Menyumbang perubahan kode
