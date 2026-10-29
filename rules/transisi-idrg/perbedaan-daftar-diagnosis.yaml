@@ -1,0 +1,90 @@
+id: perbedaan-daftar-diagnosis
+judul: Daftar diagnosis INA-CBG berbeda dari daftar diagnosis iDRG
+kategori: transisi-idrg
+status: draft
+tingkat: informasi
+
+deskripsi: >-
+  Menampilkan klaim yang daftar kode diagnosis pada jalur INA-CBG berbeda dari
+  daftar pada jalur iDRG, tanpa memperhatikan urutan. Perbedaan ini adalah
+  bagian wajar dari masa transisi ke iDRG: kedua grouper dapat memetakan kode
+  secara berbeda, misalnya satu kode dipersempit menjadi kode yang lebih
+  spesifik. Ini BUKAN temuan kesalahan.
+
+sumber_regulasi: null
+
+catatan: >-
+  Bertingkat informasi, bukan temuan: tidak ada yang perlu diperbaiki kecuali
+  ternyata ada kode yang hilang. Berstatus draft karena perilaku pemetaan iDRG
+  pada masa transisi belum sepenuhnya terdokumentasi. Pada sampel Fase 0 muncul
+  24 baris, antara lain pemetaan C41.1 menjadi C41.19.
+
+query: |
+  SELECT
+    nomor_baris,
+    berkas,
+    mrn,
+    nama_pasien,
+    sep,
+    tanggal_masuk,
+    array_to_string(diagnosis_inacbg, '; ') AS daftar_diagnosis_inacbg,
+    array_to_string(diagnosis_idrg, '; ') AS daftar_diagnosis_idrg,
+    len(diagnosis_inacbg) AS jumlah_diagnosis_inacbg,
+    len(diagnosis_idrg) AS jumlah_diagnosis_idrg,
+    kode_inacbg,
+    idrg_drg_kode,
+    versi_inacbg,
+    idrg_versi_grouper
+  FROM klaim
+  WHERE list_sort(diagnosis_inacbg) <> list_sort(diagnosis_idrg)
+  ORDER BY nomor_baris
+
+kolom_output:
+  - nama: nomor_baris
+    label: Baris
+    format: angka
+  - nama: berkas
+    label: Berkas
+  - nama: mrn
+    label: No. RM
+    identitas: true
+  - nama: nama_pasien
+    label: Nama pasien
+    identitas: true
+  - nama: sep
+    label: No. SEP
+    identitas: true
+  - nama: tanggal_masuk
+    label: Tanggal masuk
+    format: tanggal
+  - nama: daftar_diagnosis_inacbg
+    label: Diagnosis INA-CBG
+    format: daftar
+  - nama: daftar_diagnosis_idrg
+    label: Diagnosis iDRG
+    format: daftar
+  - nama: jumlah_diagnosis_inacbg
+    label: Jumlah diagnosis INA-CBG
+    format: angka
+  - nama: jumlah_diagnosis_idrg
+    label: Jumlah diagnosis iDRG
+    format: angka
+  - nama: kode_inacbg
+    label: Kode INA-CBG
+  - nama: idrg_drg_kode
+    label: Kode iDRG
+  - nama: versi_inacbg
+    label: Versi INA-CBG
+  - nama: idrg_versi_grouper
+    label: Versi grouper iDRG
+
+bukti_yang_perlu_diperiksa:
+  - Periksa apakah jumlah diagnosis pada kedua jalur sama; jumlah yang berbeda berarti ada kode yang tidak terpetakan.
+  - Periksa apakah perbedaannya hanya pada tingkat kerincian kode, misalnya kode tiga karakter menjadi empat atau lima karakter.
+  - Periksa versi grouper pada klaim ini bila perbedaan tampak tidak lazim.
+
+catatan_etika: >-
+  Informasi ini disajikan agar tim casemix memahami perilaku kedua grouper
+  selama masa transisi. Jangan memakainya untuk memilih jalur grouper yang
+  menghasilkan tarif lebih tinggi. Pengkodean tetap mengikuti diagnosis yang
+  terdokumentasi di rekam medis.

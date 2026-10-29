@@ -1,0 +1,27 @@
+{
+  "tahun": 2026,
+  "status": "placeholder",
+  "sumber": "BELUM DIISI",
+  "catatan": [
+    "BERKAS INI SENGAJA KOSONG.",
+    "",
+    "Daftar hari libur nasional dan cuti bersama tahun 2026 WAJIB diisi dari",
+    "Surat Keputusan Bersama (SKB) 3 Menteri tentang Hari Libur Nasional dan",
+    "Cuti Bersama Tahun 2026. Jangan mengisi dari ingatan, kalender aplikasi,",
+    "atau sumber sekunder.",
+    "",
+    "Cara mengisi: tambahkan objek ke dalam 'hari_libur' dan 'cuti_bersama'",
+    "dengan bentuk:",
+    "  { \"tanggal\": \"2026-01-01\", \"keterangan\": \"Tahun Baru 2026\" }",
+    "Tanggal memakai format YYYY-MM-DD.",
+    "",
+    "Setelah terisi, ubah 'status' menjadi 'terverifikasi' dan tulis nomor SKB",
+    "beserta tanggalnya di 'sumber'.",
+    "",
+    "Selama berkas ini masih berstatus placeholder, aturan",
+    "'rawat-jalan-hari-libur' hanya mendeteksi hari Minggu, dan UI menampilkan",
+    "peringatan bahwa daftar hari libur belum diisi."
+  ],
+  "hari_libur": [],
+  "cuti_bersama": []
+}

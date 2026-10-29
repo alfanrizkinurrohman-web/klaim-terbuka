@@ -1,0 +1,94 @@
+id: rawat-inap-los-1-hari
+judul: Rawat inap dengan lama rawat 1 hari
+kategori: kelengkapan
+status: draft
+tingkat: temuan
+
+deskripsi: >-
+  Menandai klaim rawat inap yang tanggal masuk dan tanggal pulangnya sama
+  (LOS 1 hari). Rawat inap sehari memang terjadi: tindakan one day care,
+  observasi yang berakhir cepat, pasien pulang atas permintaan sendiri, atau
+  pasien meninggal pada hari masuk. Yang perlu dipastikan adalah bahwa
+  dokumentasi rawat inapnya lengkap, bukan sekadar pelayanan rawat jalan yang
+  terinput sebagai rawat inap.
+
+sumber_regulasi: null
+
+catatan: >-
+  Berstatus draft karena belum ada konfirmasi sumber regulasi mengenai
+  persyaratan dokumentasi rawat inap satu hari. Pada sampel Fase 0 muncul 14
+  temuan.
+
+query: |
+  SELECT
+    nomor_baris,
+    berkas,
+    mrn,
+    nama_pasien,
+    sep,
+    tanggal_masuk,
+    tanggal_pulang,
+    los,
+    cara_pulang,
+    cara_masuk,
+    kelas_rawat,
+    kode_inacbg,
+    deskripsi_inacbg,
+    total_tarif,
+    dpjp
+  FROM klaim
+  WHERE ptd = '1'
+    AND los = 1
+  ORDER BY nomor_baris
+
+kolom_output:
+  - nama: nomor_baris
+    label: Baris
+    format: angka
+  - nama: berkas
+    label: Berkas
+  - nama: mrn
+    label: No. RM
+    identitas: true
+  - nama: nama_pasien
+    label: Nama pasien
+    identitas: true
+  - nama: sep
+    label: No. SEP
+    identitas: true
+  - nama: tanggal_masuk
+    label: Tanggal masuk
+    format: tanggal
+  - nama: tanggal_pulang
+    label: Tanggal pulang
+    format: tanggal
+  - nama: los
+    label: LOS
+    format: angka
+  - nama: cara_pulang
+    label: Cara pulang
+  - nama: cara_masuk
+    label: Cara masuk (dari C2)
+  - nama: kelas_rawat
+    label: Kelas rawat
+  - nama: kode_inacbg
+    label: Kode INA-CBG
+  - nama: deskripsi_inacbg
+    label: Deskripsi INA-CBG
+  - nama: total_tarif
+    label: Total tarif
+    format: rupiah
+  - nama: dpjp
+    label: DPJP
+    identitas: true
+
+bukti_yang_perlu_diperiksa:
+  - Periksa di rekam medis apakah ada perintah rawat inap tertulis dari DPJP beserta alasannya.
+  - Periksa catatan perawatan dan pemantauan selama pasien dirawat, termasuk catatan ruangan.
+  - Periksa cara pulang pada rekam medis, khususnya bila pasien pulang atas permintaan sendiri, dirujuk, atau meninggal.
+  - Periksa kesesuaian tanggal masuk dan tanggal pulang terhadap catatan ruangan dan SEP.
+
+catatan_etika: >-
+  Aturan ini tidak menyarankan pengubahan jenis rawat maupun lama rawat. Rawat
+  inap satu hari yang terdokumentasi lengkap adalah klaim yang sah. Yang
+  diperiksa hanya kelengkapan buktinya di rekam medis.

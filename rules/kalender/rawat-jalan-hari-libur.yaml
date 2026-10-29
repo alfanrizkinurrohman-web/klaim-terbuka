@@ -1,0 +1,86 @@
+id: rawat-jalan-hari-libur
+judul: Rawat jalan pada hari Minggu atau hari libur nasional
+kategori: kalender
+status: draft
+tingkat: temuan
+butuh_hari_libur: true
+
+deskripsi: >-
+  Menandai klaim rawat jalan yang tanggal masuknya jatuh pada hari Minggu atau
+  pada tanggal yang terdaftar sebagai hari libur nasional atau cuti bersama.
+  Pelayanan rawat jalan pada hari libur bukan hal yang mustahil — poliklinik
+  eksekutif, layanan hemodialisis, dan jadwal pengganti memang berjalan — jadi
+  temuan ini meminta pemeriksaan jadwal pelayanan, bukan menyatakan kesalahan.
+
+sumber_regulasi: null
+
+catatan: >-
+  Berstatus draft pada dua hal: (1) belum ada konfirmasi sumber regulasi yang
+  mengatur pelayanan rawat jalan pada hari libur, dan (2) daftar hari libur di
+  data/hari-libur/<tahun>.json masih placeholder dan WAJIB diisi dari SKB 3
+  Menteri. Selama daftar itu kosong, aturan ini hanya mendeteksi hari Minggu.
+  Pada sampel Fase 0, hari Minggu saja sudah menghasilkan 11 temuan.
+
+query: |
+  SELECT
+    k.nomor_baris,
+    k.berkas,
+    k.mrn,
+    k.nama_pasien,
+    k.sep,
+    k.tanggal_masuk,
+    dayname(k.tanggal_masuk) AS nama_hari,
+    coalesce(h.keterangan, 'Hari Minggu') AS alasan,
+    k.kode_inacbg,
+    k.total_tarif,
+    k.dpjp
+  FROM klaim k
+  LEFT JOIN hari_libur h
+    ON h.tanggal = k.tanggal_masuk
+  WHERE k.ptd = '2'
+    AND k.tanggal_masuk IS NOT NULL
+    AND (isodow(k.tanggal_masuk) = 7 OR h.tanggal IS NOT NULL)
+  ORDER BY k.tanggal_masuk, k.nomor_baris
+
+kolom_output:
+  - nama: nomor_baris
+    label: Baris
+    format: angka
+  - nama: berkas
+    label: Berkas
+  - nama: mrn
+    label: No. RM
+    identitas: true
+  - nama: nama_pasien
+    label: Nama pasien
+    identitas: true
+  - nama: sep
+    label: No. SEP
+    identitas: true
+  - nama: tanggal_masuk
+    label: Tanggal masuk
+    format: tanggal
+  - nama: nama_hari
+    label: Hari
+  - nama: alasan
+    label: Alasan penandaan
+  - nama: kode_inacbg
+    label: Kode INA-CBG
+  - nama: total_tarif
+    label: Total tarif
+    format: rupiah
+  - nama: dpjp
+    label: DPJP
+    identitas: true
+
+bukti_yang_perlu_diperiksa:
+  - Periksa jadwal pelayanan unit yang bersangkutan pada tanggal tersebut, termasuk jadwal pengganti hari libur.
+  - Periksa di rekam medis apakah pelayanan memang diberikan pada tanggal itu, dan apakah tanggal masuk sudah sesuai dengan catatan pelayanan.
+  - Periksa apakah layanan yang diberikan termasuk yang berjalan pada hari libur, misalnya hemodialisis, kemoterapi terjadwal, atau rehabilitasi medik.
+  - Periksa tanggal pada SEP terhadap tanggal masuk pada klaim.
+
+catatan_etika: >-
+  Aturan ini memeriksa kesesuaian tanggal pada dokumentasi, bukan kelayakan
+  pembayaran. Bila jadwal pelayanan dan rekam medis mendukung, klaim tetap sah
+  dan tidak perlu diubah. Jangan memakai temuan ini untuk mengubah tanggal
+  pelayanan.

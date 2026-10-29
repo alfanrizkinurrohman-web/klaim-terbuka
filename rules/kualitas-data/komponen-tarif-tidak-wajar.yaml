@@ -1,0 +1,91 @@
+id: komponen-tarif-tidak-wajar
+judul: Komponen biaya bernilai sangat kecil tetapi tidak nol
+kategori: kualitas-data
+status: draft
+tingkat: temuan
+
+deskripsi: >-
+  Menandai komponen biaya yang bernilai lebih dari nol tetapi di bawah ambang
+  kewajaran (bawaan Rp1.000). Nilai seperti ini hampir selalu salah input:
+  angka yang terpotong, satuan yang tertukar, atau jumlah yang terisi di kolom
+  harga. Contoh pada sampel Fase 0: komponen pelayanan darah bernilai Rp5.
+
+sumber_regulasi: null
+
+catatan: >-
+  Berstatus draft karena ambang Rp1.000 adalah perkiraan praktis, bukan angka
+  dari regulasi. Ambang dapat diubah lewat parameter ambang_rupiah. Aturan ini
+  memeriksa kualitas data dan tidak bergantung pada ketentuan tarif mana pun;
+  meski begitu statusnya tetap draft sampai ambangnya Anda setujui.
+
+parameter:
+  - nama: ambang_rupiah
+    deskripsi: Nilai rupiah di bawah mana sebuah komponen biaya dianggap tidak wajar bila tidak nol.
+    tipe: bilangan
+    bawaan: 1000
+
+query: |
+  SELECT
+    nomor_baris,
+    berkas,
+    mrn,
+    nama_pasien,
+    sep,
+    tanggal_masuk,
+    nama_komponen,
+    nilai,
+    tarif_rs,
+    kode_inacbg,
+    dpjp
+  FROM (
+    UNPIVOT klaim
+    ON COLUMNS('^komp_')
+    INTO NAME nama_komponen VALUE nilai
+  )
+  WHERE nilai > 0
+    AND nilai < {{ambang_rupiah}}
+  ORDER BY nomor_baris, nama_komponen
+
+kolom_output:
+  - nama: nomor_baris
+    label: Baris
+    format: angka
+  - nama: berkas
+    label: Berkas
+  - nama: mrn
+    label: No. RM
+    identitas: true
+  - nama: nama_pasien
+    label: Nama pasien
+    identitas: true
+  - nama: sep
+    label: No. SEP
+    identitas: true
+  - nama: tanggal_masuk
+    label: Tanggal masuk
+    format: tanggal
+  - nama: nama_komponen
+    label: Komponen biaya
+  - nama: nilai
+    label: Nilai tercatat
+    format: rupiah
+  - nama: tarif_rs
+    label: Tarif RS
+    format: rupiah
+  - nama: kode_inacbg
+    label: Kode INA-CBG
+  - nama: dpjp
+    label: DPJP
+    identitas: true
+
+bukti_yang_perlu_diperiksa:
+  - Periksa rincian tagihan rumah sakit untuk komponen tersebut dan bandingkan dengan nilai yang tercatat di klaim.
+  - Periksa apakah angka yang terisi sebenarnya jumlah satuan, bukan nilai rupiah.
+  - Periksa apakah pelayanan pada komponen tersebut memang diberikan; bila tidak, komponen seharusnya nol.
+  - Periksa proses pemindahan data dari sistem billing ke aplikasi E-Klaim untuk komponen ini.
+
+catatan_etika: >-
+  Aturan ini memeriksa kebenaran angka yang sudah ada, bukan mencari peluang
+  menambah nilai klaim. Perbaikan yang sah hanyalah menyesuaikan catatan dengan
+  rincian tagihan yang sebenarnya — termasuk bila hasilnya menurunkan nilai
+  klaim atau menjadikan komponen itu nol.

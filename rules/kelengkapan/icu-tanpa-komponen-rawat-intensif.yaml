@@ -1,0 +1,106 @@
+id: icu-tanpa-komponen-rawat-intensif
+judul: Indikator ICU terisi tetapi komponen biaya rawat intensif nol
+kategori: kelengkapan
+status: draft
+tingkat: temuan
+
+deskripsi: >-
+  Menandai klaim yang indikator ICU-nya bernilai 1 sementara komponen biaya
+  rawat intensif bernilai nol. Ada dua kemungkinan yang sama-sama masuk akal:
+  biaya perawatan intensif dibukukan pada komponen lain (paling sering kamar
+  dan akomodasi), atau indikator ICU terisi tanpa perawatan intensif yang
+  sesuai. Kolom biaya kamar, lama rawat ICU, dan jam ventilator ditampilkan
+  bersama temuan supaya kedua kemungkinan itu bisa dipilah tanpa membuka
+  berkas.
+
+sumber_regulasi: null
+
+catatan: >-
+  Berstatus draft, dan ini aturan yang paling perlu divalidasi lebih dulu.
+  Pada sampel Fase 0, kolom komponen rawat intensif bernilai nol di SELURUH
+  260 baris sementara 21 klaim ber-indikator ICU 1 — artinya aturan ini memicu
+  pada 21 dari 21 kasus ICU. Bila di rumah sakit Anda biaya ICU memang selalu
+  dibukukan di komponen kamar dan akomodasi, aturan ini harus dirumuskan ulang
+  (misalnya membandingkan biaya kamar terhadap lama rawat ICU) sebelum dipakai,
+  karena dalam bentuk sekarang seluruh temuannya akan positif palsu.
+
+query: |
+  SELECT
+    nomor_baris,
+    berkas,
+    mrn,
+    nama_pasien,
+    sep,
+    tanggal_masuk,
+    los,
+    icu_indikator,
+    icu_los,
+    jam_ventilator,
+    ventilator_digunakan,
+    komp_rawat_intensif,
+    komp_kamar_akomodasi,
+    kode_inacbg,
+    total_tarif,
+    dpjp
+  FROM klaim
+  WHERE icu_indikator = '1'
+    AND coalesce(komp_rawat_intensif, 0) = 0
+  ORDER BY nomor_baris
+
+kolom_output:
+  - nama: nomor_baris
+    label: Baris
+    format: angka
+  - nama: berkas
+    label: Berkas
+  - nama: mrn
+    label: No. RM
+    identitas: true
+  - nama: nama_pasien
+    label: Nama pasien
+    identitas: true
+  - nama: sep
+    label: No. SEP
+    identitas: true
+  - nama: tanggal_masuk
+    label: Tanggal masuk
+    format: tanggal
+  - nama: los
+    label: LOS
+    format: angka
+  - nama: icu_indikator
+    label: Indikator ICU
+  - nama: icu_los
+    label: Lama rawat ICU (hari)
+    format: angka
+  - nama: jam_ventilator
+    label: Jam ventilator
+    format: angka
+  - nama: ventilator_digunakan
+    label: Ventilator dipakai (dari C2)
+  - nama: komp_rawat_intensif
+    label: Komponen rawat intensif
+    format: rupiah
+  - nama: komp_kamar_akomodasi
+    label: Komponen kamar dan akomodasi
+    format: rupiah
+  - nama: kode_inacbg
+    label: Kode INA-CBG
+  - nama: total_tarif
+    label: Total tarif
+    format: rupiah
+  - nama: dpjp
+    label: DPJP
+    identitas: true
+
+bukti_yang_perlu_diperiksa:
+  - Periksa di rekam medis apakah pasien benar dirawat di unit perawatan intensif, dan berapa lama.
+  - Periksa pada rincian tagihan rumah sakit di komponen mana biaya perawatan intensif dibukukan.
+  - Periksa kesesuaian lama rawat ICU dan jam pemakaian ventilator terhadap catatan perawatan.
+  - Periksa apakah indikator ICU pada aplikasi E-Klaim terisi sesuai keadaan yang sebenarnya.
+
+catatan_etika: >-
+  Temuan ini soal konsistensi pencatatan biaya, bukan soal besaran klaim.
+  Memindahkan biaya antar komponen agar indikator cocok adalah hal yang TIDAK
+  boleh dilakukan atas dasar temuan ini. Yang diperiksa adalah apakah
+  pencatatan sudah mencerminkan pelayanan yang benar-benar diberikan.

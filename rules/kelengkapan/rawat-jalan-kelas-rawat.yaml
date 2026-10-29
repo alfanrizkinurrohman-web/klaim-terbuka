@@ -1,0 +1,88 @@
+id: rawat-jalan-kelas-rawat
+judul: Rawat jalan dengan kelas rawat bukan kelas 3
+kategori: kelengkapan
+status: draft
+tingkat: temuan
+
+deskripsi: >-
+  Menandai klaim rawat jalan yang kelas rawatnya bukan kelas 3. Pada sebagian
+  besar berkas, klaim rawat jalan tercatat pada kelas 3 karena kelas rawat
+  tidak relevan untuk pelayanan tanpa menginap. Nilai lain belum tentu salah —
+  bisa jadi memang begitu cara aplikasi mengisinya untuk kasus tertentu — jadi
+  yang diperiksa adalah kesesuaian isian, bukan hak kelas pasien.
+
+sumber_regulasi: null
+
+catatan: >-
+  Berstatus draft. Belum ada konfirmasi apakah ada ketentuan yang mengatur
+  kelas rawat pada klaim rawat jalan, sehingga aturan ini bisa jadi hanya
+  mencerminkan kebiasaan pengisian aplikasi dan bukan kesalahan. Pada sampel
+  Fase 0 muncul 7 temuan. Perlu validasi koder sebelum dipakai rutin.
+
+query: |
+  SELECT
+    nomor_baris,
+    berkas,
+    mrn,
+    nama_pasien,
+    sep,
+    tanggal_masuk,
+    kelas_rawat,
+    naik_kelas,
+    kelas_tujuan,
+    kode_inacbg,
+    total_tarif,
+    tarif_poli_eksekutif,
+    dpjp
+  FROM klaim
+  WHERE ptd = '2'
+    AND kelas_rawat IS NOT NULL
+    AND kelas_rawat <> '3'
+  ORDER BY nomor_baris
+
+kolom_output:
+  - nama: nomor_baris
+    label: Baris
+    format: angka
+  - nama: berkas
+    label: Berkas
+  - nama: mrn
+    label: No. RM
+    identitas: true
+  - nama: nama_pasien
+    label: Nama pasien
+    identitas: true
+  - nama: sep
+    label: No. SEP
+    identitas: true
+  - nama: tanggal_masuk
+    label: Tanggal masuk
+    format: tanggal
+  - nama: kelas_rawat
+    label: Kelas rawat
+  - nama: naik_kelas
+    label: Naik kelas (dari C2)
+  - nama: kelas_tujuan
+    label: Kelas tujuan (dari C2)
+  - nama: kode_inacbg
+    label: Kode INA-CBG
+  - nama: total_tarif
+    label: Total tarif
+    format: rupiah
+  - nama: tarif_poli_eksekutif
+    label: Tarif poliklinik eksekutif
+    format: rupiah
+  - nama: dpjp
+    label: DPJP
+    identitas: true
+
+bukti_yang_perlu_diperiksa:
+  - Periksa isian kelas rawat pada aplikasi E-Klaim untuk klaim ini terhadap kebiasaan pengisian rawat jalan di rumah sakit Anda.
+  - Periksa apakah pelayanan diberikan di poliklinik eksekutif, dan apakah hal itu memengaruhi isian kelas rawat.
+  - Periksa kelas hak peserta pada SEP, dan apakah ada naik kelas yang terdokumentasi.
+  - Periksa apakah klaim ini sebenarnya episode rawat inap yang terinput sebagai rawat jalan.
+
+catatan_etika: >-
+  Aturan ini memeriksa konsistensi isian data, bukan hak kelas peserta dan
+  bukan besaran klaim. Jangan mengubah kelas rawat hanya supaya seragam dengan
+  klaim lain; yang benar adalah isian yang sesuai keadaan sebenarnya.

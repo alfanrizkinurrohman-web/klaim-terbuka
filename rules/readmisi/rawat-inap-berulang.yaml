@@ -1,0 +1,107 @@
+id: rawat-inap-berulang
+judul: Rawat inap berulang dalam rentang hari tertentu
+kategori: readmisi
+status: draft
+tingkat: temuan
+
+deskripsi: >-
+  Menandai pasien yang kembali dirawat inap dalam rentang hari yang dapat
+  diatur (bawaan 30 hari) sejak tanggal pulang rawat inap sebelumnya. Readmisi
+  dini dapat mencerminkan perjalanan penyakit yang wajar, komplikasi, rencana
+  rawat bertahap, atau pemulangan yang terlalu cepat. Aturan ini memasangkan
+  episode dan menampilkan jaraknya; penilaian klinis ada pada DPJP.
+
+sumber_regulasi: null
+
+catatan: >-
+  Berstatus draft. Ambang 30 hari adalah nilai bawaan yang BELUM dikonfirmasi
+  terhadap sumber regulasi mana pun — jangan dibaca sebagai ambang resmi.
+  Ambang dapat diubah lewat parameter ambang_hari. Status hanya boleh menjadi
+  tervalidasi setelah sumber regulasinya dipastikan dan dicantumkan.
+
+parameter:
+  - nama: ambang_hari
+    deskripsi: Jarak maksimum dalam hari antara tanggal pulang episode sebelumnya dan tanggal masuk episode berikutnya.
+    tipe: bilangan
+    bawaan: 30
+
+query: |
+  WITH ranap AS (
+    SELECT *
+    FROM klaim
+    WHERE ptd = '1'
+      AND mrn IS NOT NULL
+      AND tanggal_masuk IS NOT NULL
+      AND tanggal_pulang IS NOT NULL
+  )
+  SELECT
+    b.nomor_baris,
+    b.berkas,
+    b.mrn,
+    b.nama_pasien,
+    b.sep,
+    a.tanggal_pulang AS pulang_episode_sebelumnya,
+    b.tanggal_masuk,
+    date_diff('day', a.tanggal_pulang, b.tanggal_masuk) AS jarak_hari,
+    a.kode_inacbg AS kode_inacbg_sebelumnya,
+    b.kode_inacbg,
+    b.los,
+    b.total_tarif,
+    b.dpjp
+  FROM ranap a
+  JOIN ranap b
+    ON b.mrn = a.mrn
+   AND b.nomor_baris <> a.nomor_baris
+   AND b.tanggal_masuk >= a.tanggal_pulang
+   AND date_diff('day', a.tanggal_pulang, b.tanggal_masuk) <= {{ambang_hari}}
+  ORDER BY b.mrn, b.tanggal_masuk, b.nomor_baris
+
+kolom_output:
+  - nama: nomor_baris
+    label: Baris
+    format: angka
+  - nama: berkas
+    label: Berkas
+  - nama: mrn
+    label: No. RM
+    identitas: true
+  - nama: nama_pasien
+    label: Nama pasien
+    identitas: true
+  - nama: sep
+    label: No. SEP
+    identitas: true
+  - nama: pulang_episode_sebelumnya
+    label: Pulang episode sebelumnya
+    format: tanggal
+  - nama: tanggal_masuk
+    label: Masuk kembali
+    format: tanggal
+  - nama: jarak_hari
+    label: Jarak (hari)
+    format: angka
+  - nama: kode_inacbg_sebelumnya
+    label: Kode INA-CBG sebelumnya
+  - nama: kode_inacbg
+    label: Kode INA-CBG
+  - nama: los
+    label: LOS
+    format: angka
+  - nama: total_tarif
+    label: Total tarif
+    format: rupiah
+  - nama: dpjp
+    label: DPJP
+    identitas: true
+
+bukti_yang_perlu_diperiksa:
+  - Periksa di rekam medis apakah readmisi berkaitan dengan diagnosis episode sebelumnya atau merupakan masalah baru.
+  - Periksa resume medis dan kondisi pasien saat pemulangan pada episode sebelumnya.
+  - Periksa apakah readmisi merupakan bagian dari rencana rawat bertahap yang sudah terdokumentasi, misalnya tindakan dua tahap atau siklus kemoterapi.
+  - Periksa kelengkapan dokumentasi kedua episode sebagai episode yang berdiri sendiri.
+
+catatan_etika: >-
+  Aturan ini tidak menilai mutu pelayanan dan tidak menilai kinerja DPJP.
+  Tujuannya memastikan kedua episode terdokumentasi lengkap sebagai episode
+  yang terpisah. Jangan memakai temuan ini untuk menggabungkan atau memecah
+  klaim.

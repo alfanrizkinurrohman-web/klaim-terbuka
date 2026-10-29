@@ -1,0 +1,92 @@
+id: duplikasi-klaim
+judul: Dugaan duplikasi klaim pada pasien dan tanggal yang sama
+kategori: duplikasi
+status: draft
+tingkat: temuan
+
+deskripsi: >-
+  Menandai klaim yang berbagi nomor rekam medis, tanggal masuk, dan jenis rawat
+  yang sama. Pola ini muncul karena beberapa sebab yang berbeda: satu episode
+  terinput dua kali, dua episode berbeda pada hari yang sama (misalnya rawat
+  jalan di dua poliklinik), atau pembatalan yang tidak terhapus. Aturan ini
+  tidak dapat membedakannya; yang bisa membedakan hanya rekam medis.
+
+sumber_regulasi: null
+
+catatan: >-
+  Berstatus draft karena belum ada konfirmasi sumber regulasi untuk definisi
+  duplikasi klaim, dan karena ambangnya (rekam medis + tanggal masuk + jenis
+  rawat) adalah pilihan desain, bukan kutipan aturan. Pada sampel Fase 0 pola
+  ini muncul pada 2 kunci.
+
+query: |
+  SELECT
+    k.nomor_baris,
+    k.berkas,
+    k.mrn,
+    k.nama_pasien,
+    k.sep,
+    k.tanggal_masuk,
+    k.ptd,
+    k.kode_inacbg,
+    k.total_tarif,
+    k.dpjp,
+    d.jumlah_klaim
+  FROM klaim k
+  JOIN (
+    SELECT mrn, tanggal_masuk, ptd, count(*) AS jumlah_klaim
+    FROM klaim
+    WHERE mrn IS NOT NULL
+      AND tanggal_masuk IS NOT NULL
+      AND ptd IS NOT NULL
+    GROUP BY mrn, tanggal_masuk, ptd
+    HAVING count(*) > 1
+  ) d
+    ON d.mrn = k.mrn
+   AND d.tanggal_masuk = k.tanggal_masuk
+   AND d.ptd = k.ptd
+  ORDER BY k.mrn, k.tanggal_masuk, k.nomor_baris
+
+kolom_output:
+  - nama: nomor_baris
+    label: Baris
+    format: angka
+  - nama: berkas
+    label: Berkas
+  - nama: mrn
+    label: No. RM
+    identitas: true
+  - nama: nama_pasien
+    label: Nama pasien
+    identitas: true
+  - nama: sep
+    label: No. SEP
+    identitas: true
+  - nama: tanggal_masuk
+    label: Tanggal masuk
+    format: tanggal
+  - nama: ptd
+    label: Jenis rawat
+  - nama: kode_inacbg
+    label: Kode INA-CBG
+  - nama: total_tarif
+    label: Total tarif
+    format: rupiah
+  - nama: dpjp
+    label: DPJP
+    identitas: true
+  - nama: jumlah_klaim
+    label: Jumlah klaim sekelompok
+    format: angka
+
+bukti_yang_perlu_diperiksa:
+  - Periksa di rekam medis apakah tanggal masuk pada kedua klaim merujuk pada episode pelayanan yang sama atau dua episode yang berbeda.
+  - Periksa apakah ada dua SEP terpisah yang sah untuk hari tersebut, misalnya kunjungan ke dua poliklinik berbeda.
+  - Periksa catatan pembatalan atau koreksi klaim di aplikasi E-Klaim untuk salah satu baris.
+  - Periksa apakah nomor rekam medis yang sama benar milik satu pasien, bukan akibat kesalahan pendaftaran.
+
+catatan_etika: >-
+  Temuan ini adalah permintaan pemeriksaan dokumen, bukan kesimpulan bahwa ada
+  klaim ganda. Bila rekam medis menunjukkan dua episode yang sah, kedua klaim
+  tetap sah dan tidak perlu diubah. Aturan ini tidak menyarankan penghapusan
+  atau penggabungan klaim.
