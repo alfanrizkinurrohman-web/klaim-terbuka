@@ -169,13 +169,31 @@ npm run preview  # menyajikan hasil build
 
 ### Menyebarkan ke GitHub Pages
 
-Hasil `npm run build` adalah situs statis biasa di folder `dist/`. Karena
-`base` sudah disetel relatif, isinya bisa langsung disajikan dari sub-folder
-mana pun — termasuk `https://<pengguna>.github.io/<repo>/` — tanpa perubahan
-konfigurasi.
+Sudah tersedia alur otomatis di
+[`.github/workflows/deploy-pages.yml`](.github/workflows/deploy-pages.yml).
+Yang perlu dilakukan sekali saja:
 
-Catatan ukuran: mesin basis data DuckDB berbentuk WebAssembly berukuran sekitar
-36 MB (±7 MB setelah gzip). Unduhan pertama besar; setelah ter-cache, aplikasi
+1. Buka **Settings → Pages**.
+2. Pada **Source**, pilih **GitHub Actions**.
+
+Setelah itu, setiap perubahan yang masuk ke cabang `main` akan diuji, dibangun,
+dan disebarkan dengan sendirinya. Penyebaran juga bisa dijalankan manual dari
+tab **Actions**.
+
+Test dan pemeriksaan tipe dijalankan **sebelum** penyebaran dan menjadi syarat.
+Bila ada test yang gagal — termasuk test penjaga privasi atau test yang menolak
+berkas aturan yang cacat — situs tidak akan diperbarui.
+
+Mau menyebarkan ke tempat lain? Hasil `npm run build` adalah situs statis biasa
+di folder `dist/`. Karena `base` disetel relatif, isinya bisa disajikan dari
+sub-folder mana pun tanpa perubahan konfigurasi.
+
+**Catatan ukuran.** Hasil build sekitar **75 MB**, hampir seluruhnya mesin
+basis data DuckDB dalam bentuk WebAssembly. Dua varian ikut dibundel: `eh`
+(34 MB) untuk peramban kini, dan `mvp` (39 MB) sebagai cadangan untuk peramban
+lama. Peramban hanya mengunduh **salah satu**, bukan keduanya. Varian cadangan
+sengaja dipertahankan karena komputer di rumah sakit tidak selalu memakai
+peramban terbaru. Unduhan pertama memang besar; setelah ter-cache, aplikasi
 berjalan tanpa jaringan.
 
 ---

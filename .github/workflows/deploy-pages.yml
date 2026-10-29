@@ -1,0 +1,77 @@
+# Membangun situs statis dan menyebarkannya ke GitHub Pages.
+#
+# Alur ini TIDAK menyentuh data klaim sama sekali: yang dibangun hanyalah
+# aplikasinya. Folder samples/ tidak pernah ikut ter-commit (lihat .gitignore),
+# jadi tidak ada data klaim di repositori maupun di runner.
+#
+# Test dijalankan lebih dulu dan menjadi syarat. Situs tidak akan tersebar bila
+# ada test yang gagal — termasuk test penjaga privasi yang menolak masuknya
+# jalur jaringan ke dalam src/, dan test yang menolak berkas aturan yang tidak
+# memenuhi skema.
+#
+# Cara mengaktifkan sekali saja: Settings -> Pages -> Source: GitHub Actions.
+
+name: Sebarkan ke GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  # Memungkinkan penyebaran manual dari tab Actions.
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Satu penyebaran pada satu waktu. Penyebaran yang sedang berjalan dibiarkan
+# selesai supaya situs tidak tertinggal dalam keadaan setengah jadi.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  bangun:
+    name: Uji dan bangun
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ambil kode
+        uses: actions/checkout@v4
+
+      - name: Siapkan Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+
+      - name: Pasang dependensi
+        run: npm ci
+
+      - name: Periksa tipe
+        run: npm run typecheck
+
+      - name: Jalankan test
+        run: npm test
+
+      - name: Bangun situs
+        run: npm run build
+
+      - name: Siapkan GitHub Pages
+        uses: actions/configure-pages@v5
+
+      - name: Unggah hasil build
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+  sebarkan:
+    name: Sebarkan
+    needs: bangun
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.penyebaran.outputs.page_url }}
+    steps:
+      - name: Sebarkan ke GitHub Pages
+        id: penyebaran
+        uses: actions/deploy-pages@v4
