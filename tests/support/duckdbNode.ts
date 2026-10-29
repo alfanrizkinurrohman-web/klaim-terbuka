@@ -11,7 +11,7 @@
 import { createRequire } from 'node:module';
 import path from 'node:path';
 
-import { normalkanBaris } from '../../src/db/nilai';
+import { jenisKolomDariSkema, normalkanBaris } from '../../src/db/nilai';
 import type { BarisHasil, KoneksiKlaim } from '../../src/db/types';
 
 const require = createRequire(import.meta.url);
@@ -46,7 +46,8 @@ export async function buatKoneksiUji(): Promise<KoneksiKlaim> {
   return {
     async jalankan(sql: string): Promise<BarisHasil[]> {
       const hasil = conn.query(sql);
-      return hasil.toArray().map((baris: any) => normalkanBaris(baris.toJSON()));
+      const jenisKolom = jenisKolomDariSkema(hasil.schema);
+      return hasil.toArray().map((baris: any) => normalkanBaris(baris.toJSON(), jenisKolom));
     },
     async jalankanInternal(sql: string): Promise<void> {
       conn.query(sql);

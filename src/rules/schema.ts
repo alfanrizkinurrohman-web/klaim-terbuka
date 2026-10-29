@@ -37,9 +37,17 @@ const KATA_KUNCI_TERLARANG = [
   'RESET',
 ];
 
-/** Hapus komentar SQL agar penjagaan tidak bisa diakali lewat komentar. */
-function tanpaKomentar(sql: string): string {
-  return sql.replace(/--[^\n]*/g, ' ').replace(/\/\*[\s\S]*?\*\//g, ' ');
+/**
+ * Siapkan query untuk diperiksa: buang komentar (agar penjagaan tidak bisa
+ * diakali dengan menyembunyikan perintah di komentar) dan kosongkan isi literal
+ * string (agar tanda baca dan kata di dalam teks, mis. pemisah ';' pada
+ * array_to_string, tidak salah terjaring).
+ */
+function untukPemeriksaan(sql: string): string {
+  return sql
+    .replace(/--[^\n]*/g, ' ')
+    .replace(/\/\*[\s\S]*?\*\//g, ' ')
+    .replace(/'(?:[^']|'')*'/g, "''");
 }
 
 const kolomOutput = z.object({
@@ -85,7 +93,7 @@ export const skemaAturan = z
     catatan: z.string().optional(),
   })
   .superRefine((a, ctx) => {
-    const sql = tanpaKomentar(a.query);
+    const sql = untukPemeriksaan(a.query);
 
     if (!/^\s*(select|with)\b/i.test(sql)) {
       ctx.addIssue({
