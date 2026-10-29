@@ -7,6 +7,10 @@ dulu — oleh rumah sakit sendiri, bukan oleh verifikator.
 
 Gratis, sumber terbuka, dan **berjalan sepenuhnya di peramban Anda**.
 
+**Buka alatnya:** <https://alfanrizkinurrohman-web.github.io/klaim-terbuka/>
+
+Tidak perlu mendaftar, tidak perlu memasang apa pun.
+
 ---
 
 ## Yang paling penting lebih dulu
