@@ -20,7 +20,15 @@ const POLA_TERLARANG: Array<{ pola: RegExp; alasan: string }> = [
   { pola: /WebSocket/, alasan: 'WebSocket membuka kanal ke jaringan' },
   { pola: /EventSource/, alasan: 'EventSource membuka kanal ke jaringan' },
   { pola: /navigator\.clipboard/, alasan: 'penyalinan ke papan klip harus lewat tindakan pengguna' },
-  { pola: /https?:\/\/(?!www\.gnu\.org|creativecommons\.org)/, alasan: 'URL jaringan di dalam kode' },
+  {
+    // Pengecualian yang disengaja:
+    //  - www.gnu.org dan creativecommons.org: rujukan lisensi di komentar.
+    //  - schemas.openxmlformats.org: PENGENAL namespace XML yang wajib ada di
+    //    dalam berkas .xlsx (src/ekspor/xlsx.ts). Bukan alamat yang dihubungi;
+    //    tidak ada permintaan jaringan dari modul itu.
+    pola: /https?:\/\/(?!www\.gnu\.org|creativecommons\.org|schemas\.openxmlformats\.org)/,
+    alasan: 'URL jaringan di dalam kode',
+  },
 ];
 
 function berkasSumber(dir: string): string[] {
@@ -50,6 +58,24 @@ describe('prinsip 100% client-side', () => {
       return pola.test(kode);
     });
     expect(pelanggar).toEqual([]);
+  });
+});
+
+describe('pemuatan mesin DuckDB', () => {
+  it('memakai aset yang dibundel, bukan CDN', () => {
+    const jalur = fileURLToPath(new URL('../src/db/duckdbBrowser.ts', import.meta.url));
+    const isi = readFileSync(jalur, 'utf8');
+    const kode = isi
+      .split('\n')
+      .filter((b) => !/^\s*(\/\/|\*|\/\*)/.test(b))
+      .join('\n');
+
+    // getJsDelivrBundles() akan mengambil mesin dari CDN. Aplikasi harus bisa
+    // dipakai di jaringan rumah sakit yang tertutup, jadi jangan sampai dipakai.
+    expect(kode).not.toContain('getJsDelivrBundles');
+    // Berkas .wasm dan worker di-import sebagai aset sehingga ikut dibundel.
+    expect(kode).toContain('duckdb-eh.wasm?url');
+    expect(kode).toContain('duckdb-browser-eh.worker.js?url');
   });
 });
 
