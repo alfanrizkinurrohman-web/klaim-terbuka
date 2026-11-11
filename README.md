@@ -216,7 +216,7 @@ src/rules/               Skema aturan, mesin eksekusi, dan ringkasan.
 src/privasi/             Penyamaran kolom identitas.
 src/ekspor/              Ekspor CSV dan Excel.
 src/ui/                  Komponen antarmuka.
-tests/                   224 test. Hanya memakai data sintetis.
+tests/                   Seluruh test. Hanya memakai data sintetis.
 ```
 
 Dokumen [`docs/format-eklaim.md`](docs/format-eklaim.md) berisi hasil
