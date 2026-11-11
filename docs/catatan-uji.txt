@@ -1,0 +1,1 @@
+Berkas uji pengecualian docs/. Tidak memuat data klaim apa pun.

@@ -1,0 +1,1 @@
+Berkas uji penjaga CI. Tidak memuat data klaim apa pun.
